@@ -1,6 +1,8 @@
-const redux = require('redux')
-const CreateStore = redux.createStore
-
+const redux = require("redux");
+const CreateStore = redux.createStore;
+const applyMiddleware = require("redux").applyMiddleware;
+const thunkMiddleware = require("redux-thunk")
+const axios = require("axios");
 const initialState = {
   loading: false,
   users: [],
@@ -53,4 +55,26 @@ const reducer = (state = initialState, action) => {
   }
 };
 
-const store = CreateStore(reducer)
+const fetchUsers = () => {
+    return function (dispatch) {
+      dispatch(fetchUsersRequest());
+      axios
+        .get("https://jsonplaceholder.typicode.com/users") // Fixed typo here
+        .then((response) => { // Changed variable name to response
+          const users = response.data; // No need to map IDs, you want the whole user objects
+          dispatch(fetchUsersSuccess(users));
+        })
+        .catch((error) => {
+          dispatch(fetchUsersFailure(error.message));
+        });
+    };
+  };
+  
+  const store = CreateStore(reducer, applyMiddleware(thunkMiddleware.default));
+
+
+store.subscribe(() => {
+  console.log(store.getState());
+});
+
+store.dispatch(fetchUsers())
